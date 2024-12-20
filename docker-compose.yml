@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Nginx Service (Web Server)
+  nginx:
+    build: ./nginx/
+    container_name: nginx-container
+    ports:
+      - "80:80"  # Memetakan port 80 di host ke port 80 di container
+    volumes:
+      - ./www/html/:/var/www/html/  # Mount file aplikasi PHP ke container Nginx
+    networks:
+      - cloud-network
+    depends_on:
+      - php  # Menunggu PHP untuk siap
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"  # Alokasi CPU maksimal 50% dari CPU host
+          memory: "512M"  # Membatasi memori maksimal 512 MB
+        reservations:
+          cpus: "0.2"  # Menjamin setidaknya 20% dari CPU host untuk Nginx
+          memory: "256M"  # Menjamin setidaknya 256 MB memori untuk Nginx
+
+  # PHP Service (PHP-FPM)
+  php:
+    build: ./php/
+    container_name: php-container
+    expose:
+      - "9000"  # Expose port 9000 untuk komunikasi dengan Nginx
+    volumes:
+      - ./www/html/:/var/www/html/  # Mount file aplikasi PHP ke container PHP
+    networks:
+      - cloud-network
+    depends_on:
+      - mysql  # Menunggu MySQL untuk siap
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"  # Alokasi CPU maksimal 50% dari CPU host
+          memory: "1G"  # Membatasi memori maksimal 1 GB
+        reservations:
+          cpus: "0.2"  # Menjamin setidaknya 20% dari CPU host untuk PHP
+          memory: "512M"  # Menjamin setidaknya 512 MB memori untuk PHP
+
+  # MySQL Service
+  mysql:
+    image: mysql:5.7
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql-data:/var/lib/mysql  # Persistensi data MySQL di volume
+    networks:
+      - cloud-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"  # Mengalokasikan lebih banyak CPU untuk MySQL
+          memory: "2G"  # Membatasi memori maksimal 2 GB untuk MySQL
+        reservations:
+          cpus: "0.5"  # Menjamin setidaknya 50% dari CPU host untuk MySQL
+          memory: "1G"  # Menjamin setidaknya 1 GB memori untuk MySQL
+
+# Jaringan yang digunakan oleh semua container
+networks:
+  cloud-network:
+    driver: bridge
+
+# Volume untuk menyimpan data MySQL secara persisten
+volumes:
+  mysql-data:
+  app-data:
