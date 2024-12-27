@@ -6,7 +6,7 @@ services:
     build: ./nginx/
     container_name: nginx-container
     ports:
-      - "80:80"  # Memetakan port 80 di host ke port 80 di container
+      - "8081:80"  # Memetakan port 80 di host ke port 80 di container
     volumes:
       - ./www/html/:/var/www/html/  # Mount file aplikasi PHP ke container Nginx
     networks:
